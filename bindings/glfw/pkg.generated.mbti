@@ -20,7 +20,15 @@ pub fn focus_window(Window) -> Unit
 
 pub fn get_framebuffer_size(Window, @ref.Ref[Int], @ref.Ref[Int]) -> Unit
 
+pub fn get_monitor_workarea(Monitor, @ref.Ref[Int], @ref.Ref[Int], @ref.Ref[Int], @ref.Ref[Int]) -> Unit
+
+pub fn get_primary_monitor() -> Monitor
+
 pub fn get_window_attrib(Window, Int) -> Int
+
+pub fn get_window_pos(Window, @ref.Ref[Int], @ref.Ref[Int]) -> Unit
+
+pub fn get_window_size(Window, @ref.Ref[Int], @ref.Ref[Int]) -> Unit
 
 pub fn iconified() -> Int
 
@@ -33,6 +41,10 @@ pub fn imgui_shutdown() -> Unit
 pub fn initialize() -> Bool
 
 pub fn make_context_current(Window) -> Unit
+
+pub fn maximize_window(Window) -> Unit
+
+pub fn maximized() -> Int
 
 pub fn opengl_core_profile() -> Int
 
@@ -78,4 +90,3 @@ pub fn Window::null() -> Self
 // Type aliases
 
 // Traits
-

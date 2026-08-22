@@ -11,3 +11,8 @@ options(
   "preferred-target": "native",
   "--moonbit-unstable-prebuild": "tools/prebuild_config.py",
 )
+
+import {
+  "moonbit-community/ini@0.2.2",
+  "moonbitlang/x@0.5.1",
+}

@@ -928,4 +928,3 @@ pub fn WindowUi::with_text_wrap_pos(Self, Float, style? : Array[StyleSheet], (Se
 pub using @bindings {type ImDrawData as DrawData}
 
 // Traits
-

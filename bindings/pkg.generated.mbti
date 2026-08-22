@@ -3335,4 +3335,3 @@ pub type ImWchar16 = UInt
 pub type ImWchar32 = UInt
 
 // Traits
-

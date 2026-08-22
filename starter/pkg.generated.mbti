@@ -6,11 +6,28 @@ import {
 }
 
 // Values
-pub fn run_forever(title? : String, width? : Int, height? : Int, x? : Int, y? : Int, floating? : Bool, vsync? : Bool, clear_color? : @imgui.Vec4, (@imgui.Ui) -> Unit raise @imgui.ImGuiError) -> Unit raise @imgui.ImGuiError
+pub fn load_window_state(String, Int, Int, Int, Int) -> WindowState
+
+pub fn read_text_file(String) -> String?
+
+pub fn run_forever(title? : String, width? : Int, height? : Int, x? : Int, y? : Int, floating? : Bool, vsync? : Bool, clear_color? : @imgui.Vec4, state_file? : String, (@imgui.Ui) -> Unit raise @imgui.ImGuiError) -> Unit raise @imgui.ImGuiError
+
+pub fn save_window_state(String, WindowState) -> Bool
+
+pub fn window_visible_on_screen(Int, Int, Int, Int) -> Bool
+
+pub fn write_text_file(String, String) -> Bool
 
 // Errors
 
 // Types and methods
+pub struct WindowState {
+  x : Int
+  y : Int
+  width : Int
+  height : Int
+  maximized : Bool
+}
 
 // Type aliases
 

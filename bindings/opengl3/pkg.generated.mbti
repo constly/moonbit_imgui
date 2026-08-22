@@ -37,4 +37,3 @@ pub fn viewport(Int, Int, Int, Int) -> Unit
 // Type aliases
 
 // Traits
-

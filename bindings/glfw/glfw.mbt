@@ -68,6 +68,11 @@ pub fn floating() -> Int {
 }
 
 ///|
+pub fn maximized() -> Int {
+  0x00020008
+}
+
+///|
 pub extern "C" fn initialize() -> Bool = "glfwInit"
 
 ///|
@@ -93,6 +98,39 @@ pub extern "C" fn destroy_window(window : Window) -> Unit = "glfwDestroyWindow"
 ///|
 #borrow(window)
 pub extern "C" fn set_window_pos(window : Window, x : Int, y : Int) -> Unit = "glfwSetWindowPos"
+
+///|
+#borrow(window, xpos, ypos)
+pub extern "C" fn get_window_pos(
+  window : Window,
+  xpos : Ref[Int],
+  ypos : Ref[Int],
+) -> Unit = "glfwGetWindowPos"
+
+///|
+#borrow(window, width, height)
+pub extern "C" fn get_window_size(
+  window : Window,
+  width : Ref[Int],
+  height : Ref[Int],
+) -> Unit = "glfwGetWindowSize"
+
+///|
+#borrow(window)
+pub extern "C" fn maximize_window(window : Window) -> Unit = "glfwMaximizeWindow"
+
+///|
+pub extern "C" fn get_primary_monitor() -> Monitor = "glfwGetPrimaryMonitor"
+
+///|
+#borrow(monitor, xpos, ypos, width, height)
+pub extern "C" fn get_monitor_workarea(
+  monitor : Monitor,
+  xpos : Ref[Int],
+  ypos : Ref[Int],
+  width : Ref[Int],
+  height : Ref[Int],
+) -> Unit = "glfwGetMonitorWorkarea"
 
 ///|
 #borrow(window)
