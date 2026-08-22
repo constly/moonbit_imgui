@@ -6,6 +6,10 @@ import {
 }
 
 // Values
+pub fn font_atlas_get_font(ImFontAtlas, Int) -> ImFont
+
+pub fn font_atlas_get_font_count(ImFontAtlas) -> Int
+
 pub fn im_col32_a_mask() -> UInt
 
 pub fn im_col32_a_shift() -> Int
@@ -2843,6 +2847,10 @@ pub fn imgui_payload_type_color_4_f() -> String
 pub fn imgui_version() -> String
 
 pub fn imgui_version_num() -> Int
+
+pub fn io_get_fonts(ImGuiIO) -> ImFontAtlas
+
+pub fn io_set_font_default(ImGuiIO, ImFont) -> Unit
 
 // Errors
 

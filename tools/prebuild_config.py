@@ -147,9 +147,10 @@ def glfw_flags() -> list[str]:
 
     NOTE: no /LIBPATH here - moon places prebuild link args before the linker's
     `/link` switch, so `cl` silently drops any /LIBPATH (warning D9002). Instead
-    the Windows import library `glfw3dll.lib` is copied next to the main module
-    root by moonbit_docs/apply-imgui-windows-fixes.ps1, which the linker
-    searches as its working directory.
+    the Windows import library `glfw3dll.lib` lives at the main module root
+    (copied there from the vcpkg install by the consumer's pre-build step, e.g.
+    <repo>/moonbit/glfw3dll.lib), which the linker searches as its working
+    directory.
     """
     configured = pkg_config("glfw3")
     if configured is not None:

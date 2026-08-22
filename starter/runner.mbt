@@ -19,6 +19,7 @@ pub fn run_forever(
   vsync? : Bool = true,
   clear_color? : @imgui.Vec4 = @imgui.Vec4::rgba(0.08, 0.09, 0.10, 1.0),
   state_file? : String = "",
+  init? : (() -> Unit raise @imgui.ImGuiError) = fn() {},
   body : (@imgui.Ui) -> Unit raise @imgui.ImGuiError,
 ) -> Unit raise @imgui.ImGuiError {
   guard @glfw.initialize() else { abort("failed to initialize GLFW") }
@@ -72,6 +73,10 @@ pub fn run_forever(
   defer context.destroy()
 
   @imgui.style().colors_dark()
+
+  // Run the user init callback (e.g. to load custom/CJK fonts) before the
+  // backends build the font atlas on the first frame.
+  init()
 
   guard @glfw.imgui_init_for_open_gl(window, true) else {
     abort("failed to initialize Dear ImGui GLFW backend")

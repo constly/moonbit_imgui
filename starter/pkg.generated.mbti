@@ -10,7 +10,7 @@ pub fn load_window_state(String, Int, Int, Int, Int) -> WindowState
 
 pub fn read_text_file(String) -> String?
 
-pub fn run_forever(title? : String, width? : Int, height? : Int, x? : Int, y? : Int, floating? : Bool, vsync? : Bool, clear_color? : @imgui.Vec4, state_file? : String, (@imgui.Ui) -> Unit raise @imgui.ImGuiError) -> Unit raise @imgui.ImGuiError
+pub fn run_forever(title? : String, width? : Int, height? : Int, x? : Int, y? : Int, floating? : Bool, vsync? : Bool, clear_color? : @imgui.Vec4, state_file? : String, init? : () -> Unit raise @imgui.ImGuiError, (@imgui.Ui) -> Unit raise @imgui.ImGuiError) -> Unit raise @imgui.ImGuiError
 
 pub fn save_window_state(String, WindowState) -> Bool
 

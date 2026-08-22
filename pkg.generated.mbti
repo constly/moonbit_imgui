@@ -174,6 +174,15 @@ pub(all) enum FocusedFlag {
 type Font
 pub fn Font::is_null(Self) -> Bool
 
+pub(all) struct FontAtlas {
+  raw : @bindings.ImFontAtlas
+}
+pub fn FontAtlas::add_font_from_file_ttf(Self, Bytes, Float, @ref.Ref[UInt]?) -> Font
+pub fn FontAtlas::build(Self) -> Bool
+pub fn FontAtlas::font(Self, Int) -> Font
+pub fn FontAtlas::font_count(Self) -> Int
+pub fn FontAtlas::get_glyph_ranges_chinese_simplified_common(Self) -> @ref.Ref[UInt]?
+
 pub(all) enum HoveredFlag {
   ChildWindows
   RootWindow
@@ -265,7 +274,9 @@ pub fn Io::add_mouse_wheel_event(Self, Float, Float) -> Unit
 pub fn Io::clear_events_queue(Self) -> Unit
 pub fn Io::clear_input_keys(Self) -> Unit
 pub fn Io::clear_input_mouse(Self) -> Unit
+pub fn Io::fonts(Self) -> FontAtlas
 pub fn Io::set_app_accepting_events(Self, Bool) -> Unit
+pub fn Io::set_font_default(Self, Font) -> Unit
 pub fn Io::set_key_event_native_data(Self, Key, Int, Int, native_legacy_index? : Int) -> Unit
 
 pub(all) enum ItemFlag {

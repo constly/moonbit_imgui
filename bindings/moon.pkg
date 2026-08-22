@@ -14,5 +14,6 @@ options(
     "upstream/imgui/imgui_widgets.cpp",
     "dcimgui.cpp",
     "generated_runtime.cpp",
+    "font_helpers.cpp",
   ],
 )

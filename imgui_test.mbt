@@ -1,16 +1,27 @@
 ///|
 test "safe api requires a current context" {
   @imgui.clear_current_context()
-  let result : Result[Unit, @imgui.ImGuiError] = try? @imgui.new_frame()
+  // The Result must escape for comparison, so construct Ok/Err explicitly.
+  let result : Result[Unit, @imgui.ImGuiError] = try {
+    @imgui.new_frame()
+    Ok(())
+  } catch {
+    e => Err(e)
+  }
   @debug.assert_eq(result, Err(NoCurrentContext))
 }
 
 ///|
 test "callback api requires a current context" {
   @imgui.clear_current_context()
-  let result : Result[Unit, @imgui.ImGuiError] = try? (@imgui.ui().window(
-    "Missing context",
-  ) <| _ => { () })
+  let result : Result[Unit, @imgui.ImGuiError] = try {
+    @imgui.ui().window(
+      "Missing context",
+    ) <| _ => { () }
+    Ok(())
+  } catch {
+    e => Err(e)
+  }
   @debug.assert_eq(result, Err(NoCurrentContext))
 }
 

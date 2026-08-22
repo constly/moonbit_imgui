@@ -5477,3 +5477,69 @@ fn bytes_to_string(value : Bytes) -> String {
   }
   @encoding/utf8.decode_lossy(value.view(end=index))
 }
+
+///|
+/// Font atlas handle; fonts are added here and rasterized by `build`.
+pub(all) struct FontAtlas {
+  raw : @bindings.ImFontAtlas
+}
+
+///|
+/// Returns the font atlas owned by the current ImGui IO.
+pub fn Io::fonts(self : Io) -> FontAtlas {
+  { raw: @bindings.io_get_fonts(self.raw) }
+}
+
+///|
+/// Loads a TrueType font from memory at the given size. When `glyph_ranges`
+/// is provided, only those glyphs are rasterized (the simplified-Chinese
+/// common ranges keep CJK text cheap). The first font added becomes the
+/// default font.
+pub fn FontAtlas::add_font_from_file_ttf(
+  self : FontAtlas,
+  data : Bytes,
+  size : Float,
+  glyph_ranges : Ref[UInt]?,
+) -> Font {
+  let raw = @bindings.im_font_atlas_add_font_from_file_ttf(
+    self.raw,
+    data,
+    size,
+    @bindings.ImFontConfig::null(),
+    glyph_ranges,
+  )
+  { raw, }
+}
+
+///|
+/// Glyph ranges covering common simplified Chinese characters plus ASCII.
+pub fn FontAtlas::get_glyph_ranges_chinese_simplified_common(
+  self : FontAtlas,
+) -> Ref[UInt]? {
+  @bindings.im_font_atlas_get_glyph_ranges_chinese_simplified_common(self.raw)
+}
+
+///|
+/// Rasterizes the atlas. Call after adding fonts and before the first frame
+/// that uses them.
+pub fn FontAtlas::build(self : FontAtlas) -> Bool {
+  @bindings.im_font_atlas_build(self.raw)
+}
+
+///|
+/// Number of fonts currently loaded in the atlas.
+pub fn FontAtlas::font_count(self : FontAtlas) -> Int {
+  @bindings.font_atlas_get_font_count(self.raw)
+}
+
+///|
+/// The font at the given atlas index (0-based); index 0 is the default font.
+pub fn FontAtlas::font(self : FontAtlas, index : Int) -> Font {
+  { raw: @bindings.font_atlas_get_font(self.raw, index) }
+}
+
+///|
+/// Sets the font used by default for all ImGui text.
+pub fn Io::set_font_default(self : Io, font : Font) -> Unit {
+  @bindings.io_set_font_default(self.raw, font.raw)
+}
