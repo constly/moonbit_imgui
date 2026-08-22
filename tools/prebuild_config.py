@@ -49,6 +49,55 @@ def quote_flags(flags: list[str]) -> str:
     return " ".join(shlex.quote(flag) for flag in flags)
 
 
+def _vswhere_vc_installed() -> bool:
+    """True if vswhere finds a VS install with x64 VC tools (cl.exe present).
+
+    Lets the script detect MSVC even when `cl` is not on PATH (i.e. outside a
+    Developer Command Prompt), so plain `moon build` works from any terminal.
+    """
+    vswhere = r"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+    if not os.path.isfile(vswhere):
+        return False
+    try:
+        result = subprocess.run(
+            [
+                vswhere,
+                "-latest",
+                "-products",
+                "*",
+                "-requires",
+                "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+                "-property",
+                "installationPath",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=False,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if result.returncode != 0:
+        return False
+    vs_root = result.stdout.strip()
+    if not vs_root:
+        return False
+    msvc_dir = os.path.join(vs_root, "VC", "Tools", "MSVC")
+    if not os.path.isdir(msvc_dir):
+        return False
+    try:
+        versions = os.listdir(msvc_dir)
+    except OSError:
+        return False
+    return any(
+        os.path.isfile(
+            os.path.join(msvc_dir, ver, "bin", "Hostx64", "x64", "cl.exe")
+        )
+        for ver in versions
+    )
+
+
 def toolchain_name() -> str:
     if system_name() != "windows":
         return "gnu"
@@ -60,6 +109,8 @@ def toolchain_name() -> str:
     if "clang-cl" in configured or configured.endswith(" cl") or configured.endswith(" cl.exe"):
         return "msvc"
     if shutil.which("cl") is not None or shutil.which("clang-cl") is not None:
+        return "msvc"
+    if _vswhere_vc_installed():
         return "msvc"
     return "gnu"
 
@@ -92,6 +143,14 @@ def stub_flags(include_dirs: list[str]) -> list[str]:
 
 
 def glfw_flags() -> list[str]:
+    """GLFW link libraries for this platform.
+
+    NOTE: no /LIBPATH here - moon places prebuild link args before the linker's
+    `/link` switch, so `cl` silently drops any /LIBPATH (warning D9002). Instead
+    the Windows import library `glfw3dll.lib` is copied next to the main module
+    root by moonbit_docs/apply-imgui-windows-fixes.ps1, which the linker
+    searches as its working directory.
+    """
     configured = pkg_config("glfw3")
     if configured is not None:
         return configured
@@ -100,19 +159,8 @@ def glfw_flags() -> list[str]:
             return ["-L/opt/homebrew/lib", "-L/usr/local/lib", "-lglfw"]
         case "windows":
             if toolchain_name() == "msvc":
-                flags = []
-                glfw_lib_dir = os.environ.get("GLFW_LIB_DIR")
-                if glfw_lib_dir:
-                    flags.append(f"/LIBPATH:{glfw_lib_dir}")
-                else:
-                    vcpkg_root = os.environ.get("VCPKG_ROOT")
-                    if vcpkg_root:
-                        triplet = os.environ.get("VCPKG_DEFAULT_TRIPLET", "x64-windows")
-                        lib_dir = os.path.join(vcpkg_root, "installed", triplet, "lib")
-                        flags.append(f"/LIBPATH:{lib_dir}")
                 return [
-                    *flags,
-                    "glfw3.lib",
+                    "glfw3dll.lib",
                     "opengl32.lib",
                     "gdi32.lib",
                     "user32.lib",
@@ -183,29 +231,29 @@ def main() -> None:
     backend_stub = backend_stub_link_flags()
     glfw = quote_flags(backend_stub + glfw_flags())
     opengl3 = quote_flags(backend_stub + opengl_flags())
+    # Resolve include dirs to absolute (forward-slash) paths so the stub
+    # compilation succeeds regardless of the compiler's working directory.
+    module_root = os.path.abspath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+    ).replace("\\", "/")
+    bindings_dir = os.path.join(module_root, "bindings")
+    upstream_imgui = os.path.join(bindings_dir, "upstream", "imgui")
+    upstream_backends = os.path.join(upstream_imgui, "backends")
+    glfw_include = os.path.join(
+        upstream_imgui, "examples", "libs", "glfw", "include"
+    )
     output = {
         "vars": {
             "IMGUI_CORE_STUB_FLAGS": quote_flags(
-                stub_flags([".", "upstream/imgui", "upstream/imgui/backends"])
+                stub_flags([bindings_dir, upstream_imgui, upstream_backends])
             ),
             "IMGUI_GLFW_STUB_FLAGS": quote_flags(
                 stub_flags(
-                    [
-                        "bindings",
-                        "bindings/upstream/imgui",
-                        "bindings/upstream/imgui/backends",
-                        "bindings/upstream/imgui/examples/libs/glfw/include",
-                    ]
+                    [bindings_dir, upstream_imgui, upstream_backends, glfw_include]
                 )
             ),
             "IMGUI_OPENGL3_STUB_FLAGS": quote_flags(
-                stub_flags(
-                    [
-                        "bindings",
-                        "bindings/upstream/imgui",
-                        "bindings/upstream/imgui/backends",
-                    ]
-                )
+                stub_flags([bindings_dir, upstream_imgui, upstream_backends])
             ),
         },
         "link_configs": [
