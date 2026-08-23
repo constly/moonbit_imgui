@@ -2445,6 +2445,74 @@ pub fn Ui::main_menu_bar(
 }
 
 ///|
+/// Sets the position of the window to be opened next (before `Ui::window`).
+/// `cond` is an ImGuiCond bitmask (1 = Always, 2 = Once, 4 = FirstUseEver).
+pub fn Ui::set_next_window_pos(
+  _self : Ui,
+  x : Float,
+  y : Float,
+  cond? : Int = 1,
+) -> Unit raise ImGuiError {
+  ensure_current_context()
+  @bindings.ui_set_next_window_pos(x, y, cond)
+}
+
+///|
+/// Sets the size of the window to be opened next (before `Ui::window`).
+/// `cond` is an ImGuiCond bitmask (1 = Always, 2 = Once, 4 = FirstUseEver).
+pub fn Ui::set_next_window_size(
+  _self : Ui,
+  w : Float,
+  h : Float,
+  cond? : Int = 1,
+) -> Unit raise ImGuiError {
+  ensure_current_context()
+  @bindings.ui_set_next_window_size(w, h, cond)
+}
+
+///|
+/// Pushes the window padding style var to (x, y). Call BEFORE `Ui::window`
+/// and pair it with `Ui::pop_style_var(1)` after the window. Use (0, 0) for a
+/// zero-padding window whose children fill the window edge to edge.
+pub fn Ui::push_window_padding_xy(
+  _self : Ui,
+  x : Float,
+  y : Float,
+) -> Unit raise ImGuiError {
+  ensure_current_context()
+  @bindings.ui_push_window_padding_xy(x, y)
+}
+
+///|
+/// Pops `count` style vars pushed for the current window.
+pub fn Ui::pop_style_var(_self : Ui, count : Int) -> Unit raise ImGuiError {
+  ensure_current_context()
+  @bindings.ui_pop_style_var(count)
+}
+
+///|
+/// Sets the cursor position (x, y) relative to the current window's content
+/// region, in one call.
+pub fn WindowUi::set_cursor_pos(
+  _self : WindowUi,
+  x : Float,
+  y : Float,
+) -> Unit raise ImGuiError {
+  ensure_current_context()
+  @bindings.ui_set_cursor_pos(x, y)
+}
+
+///|
+/// Returns the current ImGui display size in pixels (io.DisplaySize).
+pub fn Io::display_size(self : Io) -> Float2 raise ImGuiError {
+  ensure_current_context()
+  let w : Ref[Float] = Ref(0.0)
+  let h : Ref[Float] = Ref(0.0)
+  @bindings.io_get_display_size(self.raw, w, h)
+  { x: w.val, y: h.val }
+}
+
+///|
 /// Opens a window, runs `body` when visible, and always closes the ImGui scope.
 pub fn Ui::window(
   _self : Ui,
@@ -4196,6 +4264,112 @@ pub fn WindowUi::columns(
 pub fn WindowUi::next_column(_self : WindowUi) -> Unit raise ImGuiError {
   ensure_current_context()
   @bindings.im_gui_next_column()
+}
+
+///|
+/// Opens a child window of the given size and runs `body` inside it.
+/// A size of `-1.0` fills the remaining available space. When `border` is
+/// true the child is drawn with a border. Useful for splitters / panes.
+pub fn WindowUi::child(
+  _self : WindowUi,
+  id : String,
+  w : Float,
+  h : Float,
+  border? : Bool = true,
+  padding? : Float = 0.0,
+  body : (WindowUi) -> Unit raise ImGuiError,
+) -> Unit raise ImGuiError {
+  ensure_current_context()
+  // The child is itself a "window" and honors StyleVar WindowPadding, which
+  // gives its content an inner inset so widgets do not touch the borders.
+  // (Push before BeginChild so it applies to the child; pop after EndChild.)
+  let flags =
+    if border { @bindings.im_gui_child_flags_borders() } else { 0 }
+  if padding > 0.0 {
+    @bindings.ui_push_window_padding_xy(padding, padding)
+  }
+  let active = @bindings.ui_begin_child(utf8(id), w, h, flags, 0)
+  defer @bindings.ui_end_child()
+  if padding > 0.0 {
+    defer @bindings.ui_pop_style_var(1)
+  }
+  if active {
+    body(WindowUi(()))
+  }
+}
+
+///|
+/// An invisible button spanning the given size (negative = fill remaining).
+/// Returns true while the button is pressed. Used for drag handles.
+pub fn WindowUi::invisible_button(
+  _self : WindowUi,
+  id : String,
+  w : Float,
+  h : Float,
+) -> Bool raise ImGuiError {
+  ensure_current_context()
+  @bindings.ui_invisible_button(utf8(id), w, h, 0)
+}
+
+///|
+/// Returns true if the last submitted item is active (e.g. being dragged).
+pub fn WindowUi::is_item_active(_self : WindowUi) -> Bool raise ImGuiError {
+  ensure_current_context()
+  @bindings.im_gui_is_item_active()
+}
+
+///|
+/// Returns how far the mouse has been dragged since the given mouse button
+/// was pressed (for implementing drag splitters).
+pub fn WindowUi::mouse_drag_delta(
+  _self : WindowUi,
+  button? : MouseButton = MouseButton::left(),
+  lock_threshold? : Float = -1.0,
+) -> Float2 raise ImGuiError {
+  ensure_current_context()
+  let dx : Ref[Float] = Ref(0.0)
+  let dy : Ref[Float] = Ref(0.0)
+  @bindings.ui_get_mouse_drag_delta(button.value(), lock_threshold, dx, dy)
+  { x: dx.val, y: dy.val }
+}
+
+///|
+/// Returns the available content region size inside the current window.
+pub fn WindowUi::content_region_avail(_self : WindowUi) -> Float2 raise ImGuiError {
+  ensure_current_context()
+  let w : Ref[Float] = Ref(0.0)
+  let h : Ref[Float] = Ref(0.0)
+  @bindings.ui_get_content_region_avail(w, h)
+  { x: w.val, y: h.val }
+}
+
+///|
+/// A draggable splitter between two panes. `size1`/`size2` hold the current
+/// widths and are updated by dragging while honoring the minimum sizes.
+/// `split_vertically` selects a horizontal splitter (left/right panes).
+/// Returns true while the user is dragging it.
+pub fn WindowUi::splitter(
+  _self : WindowUi,
+  id : String,
+  split_vertically : Bool,
+  thickness : Float,
+  size1 : Ref[Float],
+  size2 : Ref[Float],
+  min_size1 : Float,
+  min_size2 : Float,
+  splitter_long_axis_size? : Float = -1.0,
+) -> Bool raise ImGuiError {
+  ensure_current_context()
+  @bindings.ui_splitter(
+    utf8(id),
+    split_vertically,
+    thickness,
+    size1,
+    size2,
+    min_size1,
+    min_size2,
+    splitter_long_axis_size,
+  )
 }
 
 ///|
