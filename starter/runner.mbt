@@ -20,6 +20,7 @@ pub fn run_forever(
   clear_color? : @imgui.Vec4 = @imgui.Vec4::rgba(0.08, 0.09, 0.10, 1.0),
   state_file? : String = "",
   init? : (() -> Unit raise @imgui.ImGuiError) = fn() {},
+  on_close? : (() -> Unit) = fn() {},
   body : (@imgui.Ui) -> Unit raise @imgui.ImGuiError,
 ) -> Unit raise @imgui.ImGuiError {
   guard @glfw.initialize() else { abort("failed to initialize GLFW") }
@@ -134,6 +135,11 @@ pub fn run_forever(
       }),
     )
   }
+
+  // Run the user close callback exactly once, after the frame loop ends
+  // (e.g. to persist app-level UI state). The body callback runs per frame,
+  // so anything that must happen only on exit belongs here.
+  on_close()
 }
 
 ///|
